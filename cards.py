@@ -6,6 +6,8 @@ Created on Wed Sep 26 22:54:45 2018
 """
 
 class Card:
+    """A hanafuda card object, described by its traditional name
+    and unique ID, numeric month ID, flower, and point value"""
     #I should probably add subclasses for each month? Might just be a case of over-specifying
     __slots__ = ["name", "nameId", "monthId", "flower", "value"]
     
@@ -29,23 +31,18 @@ class Card:
             return True
         if self.value > other.value:
             return True
-        return False
-    
-    def __gt__(self, other):
-        if self.monthId > other.monthId:
+        if self.nameId < other.nameId:
             return True
-        if self.monthId < other.monthId:
-            return False
-        if self.value >= other.value:
-            return False
-        return True
-    
-    #note that these cards are coded to check for *functional* equality. Two dregs of a given month will return as equal
-    #for "proper" sorting, add a name < or > check to the gt/lt above. 
+        return False
+
     def __eq__(self, other):
-        if self.monthId == other.monthId and self.value == other.value:
+        if self.monthId == other.monthId and self.value == other.value and self.nameId == other.nameId:
             return True
         return False
+
+    def __gt__(self, other):
+        if not self.__eq__(other):
+            return not self.__lt__(other)
     
     def __le__(self, other):
         return (self.__lt__(other) or self.__eq__(other))
@@ -105,23 +102,34 @@ _dec002 = Card("Paul 1", "dec002", 12, "paulownia", 1)
 _dec003 = Card("Paul 2", "dec003", 12, "paulownia", 1)
 _dec004 = Card("Paul 3", "dec004", 12, "paulownia", 1)
 
-#make the public list of cards
-cardlist = {}
+
+#is the next chunk bad practice? I feel like it's bad practice...
+#
+_hanafudaDict = {}
 for i in ["jan", "feb", "mar", "apr", "may", "jun", "jul", "aug", "sep", "oct", "nov", "dec"]:
     for j in range(1,5):
         currentIndex = "%s00%s" % (i, j)
-        cardlist[currentIndex] = eval("_%s" % (currentIndex))
+        _hanafudaDict[currentIndex] = eval("_%s" % (currentIndex))
+
+def getCard(nameId):
+    """Returns the Hanafuda card with the given index from cards.cardList"""
+    return _hanafudaDict[nameId]
+#
+
+cardList = [[card.nameId, card.name] for card in sorted(_hanafudaDict.values())]
 
 
 
-
+#entirely for testing purposes...
 if __name__ == "__main__":
     print(_jan001)
     print(repr(_jan001))
-    print(cardlist["jan001"])
-    print(cardlist["feb003"])
+    print(_hanafudaDict["jan001"])
+    print(_hanafudaDict["feb003"])
     bleh = [_jan003, _jan004, _jan001, _sep003]
     bleh.sort()
     print(bleh)
     print([str(item) for item in bleh])
+    print(getCard("jan001"))
+    print(repr(getCard("jan001")))
  
