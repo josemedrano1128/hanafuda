@@ -22,7 +22,8 @@ class Card:
         return self.name
     
     def __repr__(self):
-        return "Card(%s, %s, %s, %s, %s)" % (self.name, self.nameId, self.monthId, self.flower, self.value) 
+        #change this to new style formatting 
+        return "Card({}, {}, {}, {}, {})".format(self.name, self.nameId, self.monthId, self.flower, self.value) 
     
     def __lt__(self, other):
         if self.monthId > other.monthId:
@@ -107,9 +108,9 @@ _dec004 = Card("Paul 3", "dec004", 12, "paulownia", 1)
 #
 _hanafudaDict = {}
 for i in ["jan", "feb", "mar", "apr", "may", "jun", "jul", "aug", "sep", "oct", "nov", "dec"]:
-    for j in range(1,5):
-        currentIndex = "%s00%s" % (i, j)
-        _hanafudaDict[currentIndex] = eval("_%s" % (currentIndex))
+    for j in range(1,5): 
+        currentIndex = "{}00{}".format(i, j)
+        _hanafudaDict[currentIndex] = eval("_{}".format(currentIndex))
 
 def getCard(nameId):
     """Returns the Hanafuda card with the given index from cards.cardList"""

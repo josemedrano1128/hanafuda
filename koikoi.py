@@ -5,13 +5,13 @@ Created on Thu Sep 27 23:38:43 2018
 @author: Jose
 """
 
-import collections
+from random import shuffle
 
 #work on this class is pending
-class Deck(collections.MutableSequence):
-    #does this even need to be its own class, now that I think about it? 
-
-    #__slots__ = []
+class Deck:
+    #contents will be ordered from [top->bottom] for simplicity
+    
+    __slots__ = ["contents"]
     
     def __init__(self, contents=None):
         if contents is None:
@@ -20,30 +20,51 @@ class Deck(collections.MutableSequence):
             self.contents = contents
     
     def pop(self, number=1):
-        #release top card in deck
-        pass
+        """returns the top n cards in the deck and erases them as part of self.contents"""
+        cardsToDeal,self.contents = self.contents[:number],self.contents[number:]
+        return cardsToDeal
+        
+        
     
     def shuffle(self):
-        #randomize deck order
-        pass
-    
-    def __str__(self):
-        pass
-    
+        """Shuffles the deck contents"""
+        #repeating this function name might be a bad idea but scope saving me
+        shuffle(self.contents)
+
     def __repr__(self):
-        pass
+        return "Deck({})".format(self.contents)
 
 
 class Hand:
-    __slots__ = []
+    #this is almost a subclass of Deck...I should consider making it one
+    __slots__ = ["contents"]
     
-    def __init__(self):
-        pass
+    def __init__(self, contents):
+        self.contents = contents
     
-    def play(self, card):
-        pass
+    def play(self, cardIndex):
+        cardToPlay = self.contents.pop(cardIndex)
+        return cardToPlay
+    
+    def __repr__(self):
+        return "Hand({})".format(self.contents)
     
     def sort(self):
-        pass
+        self.contents.sort()
     
     
+class Manager:
+    pass
+
+
+
+if __name__ == "__main__":
+    myDeck = Deck([0,1,2,3,4,5])
+    print(myDeck)
+    myDeck.shuffle()
+    print(myDeck)
+    hand = Hand(myDeck.pop(3))
+    print(hand)
+    a = hand.play(1)
+    print(hand)
+    print(a)
