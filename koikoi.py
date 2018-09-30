@@ -41,8 +41,11 @@ class Hand:
     #this is almost a subclass of Deck...I should consider making it one
     __slots__ = ["contents"]
     
-    def __init__(self, contents):
-        self.contents = contents
+    def __init__(self, contents=None):
+        if contents is None:
+            self.contents = []
+        else:
+            self.contents = contents
     
     def play(self, cardIndex):
         cardToPlay = self.contents.pop(cardIndex)
@@ -55,8 +58,25 @@ class Hand:
         self.contents.sort()
     
 class CenterBoard:
-    pass
-
+    __slots__ = ["contents"]
+    
+    def __init__(self, contents=None):
+        if contents is None:
+            self.contents = []
+        else:
+            self.contents = contents
+    
+    def accept(self, card):
+        #This should be different depending on whether the card played makes a yaku or not
+        #and maybe return a value if hiki is achieved?
+        pass
+    
+    def release(self, cards):
+        #release to scoring area
+        pass
+    
+    
+    
 
 class ScoringArea:
     pass
