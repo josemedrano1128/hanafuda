@@ -6,6 +6,8 @@ Created on Thu Sep 27 23:38:43 2018
 """
 
 from random import shuffle
+import cards
+
 
 #work on this class is pending
 class Deck:
@@ -59,6 +61,7 @@ class Manager:
 
 
 if __name__ == "__main__":
+    print(cards.getCard("jan001"))
     myDeck = Deck([0,1,2,3,4,5])
     print(myDeck)
     myDeck.shuffle()
@@ -68,3 +71,23 @@ if __name__ == "__main__":
     a = hand.play(1)
     print(hand)
     print(a)
+    
+    print("\nThe real tests start now...\n")
+    
+    realDeck = Deck(cards.getDeck())
+    print(realDeck)
+    print("\n")
+    realDeck.shuffle()
+    print(realDeck)
+    print("\n")
+    hand1 = Hand(realDeck.pop(8))
+    hand2 = Hand(realDeck.pop(8))
+    print(hand1)
+    print("\n")
+    hand1.sort()
+    print(hand1)
+    print("\n")
+    print(hand2)
+    print("\n")
+    hand2.sort()
+    print(hand2)

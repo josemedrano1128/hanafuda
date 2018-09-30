@@ -113,11 +113,18 @@ for i in ["jan", "feb", "mar", "apr", "may", "jun", "jul", "aug", "sep", "oct", 
         _hanafudaDict[currentIndex] = eval("_{}".format(currentIndex))
 
 def getCard(nameId):
-    """Returns the Hanafuda card with the given index from cards.cardList"""
+    """Returns the Hanafuda card with the given index from getCardList"""
     return _hanafudaDict[nameId]
 #
 
-cardList = [[card.nameId, card.name] for card in sorted(_hanafudaDict.values())]
+
+def getCardList():
+    """List of cards and indices to use with getCard"""
+    return [[card.nameId, card.name] for card in sorted(_hanafudaDict.values())]
+
+def getDeck():
+    """returns a list of cards ready to be made into a Deck"""
+    return [card for card in sorted(_hanafudaDict.values())]
 
 
 
