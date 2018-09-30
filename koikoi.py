@@ -54,7 +54,14 @@ class Hand:
     def sort(self):
         self.contents.sort()
     
-    
+class CenterBoard:
+    pass
+
+
+class ScoringArea:
+    pass
+
+
 class Manager:
     pass
 
