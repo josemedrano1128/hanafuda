@@ -12,8 +12,34 @@ import cards
 
 #work on this class is pending
 class CardCollection:
-    #I think this is the real solution, since so many of these classes have similar methods. 
-    pass
+    #I think this is the real solution, since so many of these classes have similar methods.
+    #still need to implement this in the other classs
+    __slots__ = ["contents"]
+    
+    def __init__(self, contents=None):
+        if contents is None:
+            self.contents = []
+        else:
+            self.contents = contents
+    
+    def __len__(self):
+        return len(self.contents)
+    
+    def shuffle(self):
+        """Shuffles the deck contents"""
+        #repeating this function name might be a bad idea but scope saving me
+        shuffle(self.contents)
+
+    def __repr__(self):
+        return "{}({})".format(type(self).__name__,self.contents)
+    
+    def __str__(self):
+        return "{}({})".format(type(self).__name__,[card.name for card in self.contents])
+    
+    def sort(self):
+        self.contents.sort()
+
+    
 
 class Deck:
     #contents will be ordered from [top->bottom] for simplicity
