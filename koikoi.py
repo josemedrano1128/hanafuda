@@ -11,6 +11,10 @@ import cards
 
 
 #work on this class is pending
+class CardCollection:
+    #I think this is the real solution, since so many of these classes have similar methods. 
+    pass
+
 class Deck:
     #contents will be ordered from [top->bottom] for simplicity
     
@@ -36,6 +40,9 @@ class Deck:
 
     def __repr__(self):
         return "Deck({})".format(self.contents)
+    
+    def __str__(self):
+        return str([card.name for card in self.contents])
 
 
 class Hand:
@@ -55,8 +62,8 @@ class Hand:
     def __repr__(self):
         return "Hand({})".format(self.contents)
     
-   # def __repr__(self):
-      #  return 
+    def __str__(self):
+        return str([card.name for card in self.contents])
     
     def sort(self):
         self.contents.sort()
@@ -88,6 +95,11 @@ class CenterBoard:
         awaitingRelease,self.awaitingRelease = self.awaitingRelease, []
         return awaitingRelease
     
+    def __str__(self):
+        return str([card.name for card in self.contents])
+    
+    def __repr__(self):
+        return str(self.contents)
     
     
 
@@ -162,6 +174,6 @@ if __name__ == "__main__":
     center = CenterBoard(gameDeck.pop(8))
     sleep(2)
     print("Center Board:")
-    print(center.contents)
+    print(center)
     print("\nGame is ready to begin. Proceed.")
     
