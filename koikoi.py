@@ -6,6 +6,7 @@ Created on Thu Sep 27 23:38:43 2018
 """
 
 from random import shuffle
+from time import sleep
 import cards
 
 
@@ -54,32 +55,55 @@ class Hand:
     def __repr__(self):
         return "Hand({})".format(self.contents)
     
+   # def __repr__(self):
+      #  return 
+    
     def sort(self):
         self.contents.sort()
     
 class CenterBoard:
-    __slots__ = ["contents"]
+    __slots__ = ["contents","awaitingRelease"]
     
     def __init__(self, contents=None):
         if contents is None:
             self.contents = []
         else:
             self.contents = contents
+        self.awaitingRelease = []
     
-    def accept(self, card):
-        #This should be different depending on whether the card played makes a yaku or not
-        #and maybe return a value if hiki is achieved?
-        pass
-    
+    def accept(self, cardPlayed):
+        #and return a value if hiki/match is achieved?
+        matchList = list(filter(lambda card: card.monthId == cardPlayed.monthId, self.contents))
+        if len(matchList) == 0:
+            self.contents += [cardPlayed]
+            return 0
+        if len(matchList) == 1:
+            self.contents.remove(matchList[0])
+            self.awaitingRelease = [matchList[0],cardPlayed]
+            return 1
+        #stuff for displaying options here
+
     def release(self, cards):
         #release to scoring area
-        pass
+        awaitingRelease,self.awaitingRelease = self.awaitingRelease, []
+        return awaitingRelease
     
     
     
 
 class ScoringArea:
-    pass
+    
+    __slots__ = ["contents"]
+    
+    def __init__(self):
+        self.contents = {"20" : [], "10" : [], "5": [], "1": []}
+    
+    def accept(self, cards):
+        """Accepts any number of cards given at a time and puts them in the appropriate score areas"""
+        #Uses the values as the dictionary key, as that is how cards are stored in physical score areas
+        #scoring work itself should be done by the Manager
+        for card in cards:
+            self.contents[str(card.value)].append(card)
 
 
 class Manager:
@@ -88,6 +112,7 @@ class Manager:
 
 
 if __name__ == "__main__":
+    """
     print(cards.getCard("jan001"))
     myDeck = Deck([0,1,2,3,4,5])
     print(myDeck)
@@ -118,3 +143,25 @@ if __name__ == "__main__":
     print("\n")
     hand2.sort()
     print(hand2)
+    """
+    gameDeck = Deck(cards.getDeck())
+    print("Deck initialized...shuffling\n")
+    sleep(2)
+    gameDeck.shuffle()
+    #print("Printing Deck...\n")
+    #print(gameDeck)
+    print("Dealing...\n")
+    hand1 = Hand(gameDeck.pop(8))
+    hand1.sort()
+    hand2 = Hand(gameDeck.pop(8))
+    hand2.sort()
+    sleep(2)
+    print("Hands have been dealt.\n")
+    sleep(1)
+    print("Dealing to Center Board...\n")
+    center = CenterBoard(gameDeck.pop(8))
+    sleep(2)
+    print("Center Board:")
+    print(center.contents)
+    print("\nGame is ready to begin. Proceed.")
+    
