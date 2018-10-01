@@ -31,7 +31,9 @@ class Deck:
         cardsToDeal,self.contents = self.contents[:number],self.contents[number:]
         return cardsToDeal
         
-        
+    #things like this are why said CardCollection class might be useful, so I don't have to keep defining it
+    def __len__(self):
+        return len(self.contents)
     
     def shuffle(self):
         """Shuffles the deck contents"""
