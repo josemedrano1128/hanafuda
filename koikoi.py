@@ -14,7 +14,7 @@ import cards
 class CardCollection:
     #I think this is the real solution, since so many of these classes have similar methods.
     #still need to implement this in the other classs
-    __slots__ = ["contents"]
+    #__slots__ = ["contents"]
     
     def __init__(self, contents=None):
         if contents is None:
@@ -28,6 +28,8 @@ class CardCollection:
     def shuffle(self):
         """Shuffles the deck contents"""
         #repeating this function name might be a bad idea but scope saving me
+        #it's not actually scope; it's the fact that I call the standalone function 
+        #instead of Deck.shuffle()
         shuffle(self.contents)
 
     def __repr__(self):
@@ -41,70 +43,35 @@ class CardCollection:
 
     
 
-class Deck:
+class Deck(CardCollection):
     #contents will be ordered from [top->bottom] for simplicity
     
-    __slots__ = ["contents"]
+    #__slots__ = ["_collection"]
     
     def __init__(self, contents=None):
-        if contents is None:
-            self.contents = []
-        else:
-            self.contents = contents
-    
+        CardCollection.__init__(self, contents)
+        #self._collection = CardCollection(contents)
+
     def pop(self, number=1):
         """returns the top n cards in the deck and erases them as part of self.contents"""
         cardsToDeal,self.contents = self.contents[:number],self.contents[number:]
         return cardsToDeal
-        
-    #things like this are why said CardCollection class might be useful, so I don't have to keep defining it
-    def __len__(self):
-        return len(self.contents)
-    
-    def shuffle(self):
-        """Shuffles the deck contents"""
-        #repeating this function name might be a bad idea but scope saving me
-        shuffle(self.contents)
-
-    def __repr__(self):
-        return "Deck({})".format(self.contents)
-    
-    def __str__(self):
-        return str([card.name for card in self.contents])
 
 
-class Hand:
-    #this is almost a subclass of Deck...I should consider making it one
-    __slots__ = ["contents"]
+class Hand(CardCollection):
     
     def __init__(self, contents=None):
-        if contents is None:
-            self.contents = []
-        else:
-            self.contents = contents
+        CardCollection.__init__(self, contents)
     
     def play(self, cardIndex):
         cardToPlay = self.contents.pop(cardIndex)
         return cardToPlay
     
-    def __repr__(self):
-        return "Hand({})".format(self.contents)
-    
-    def __str__(self):
-        return str([card.name for card in self.contents])
-    
-    def sort(self):
-        self.contents.sort()
-    
-class CenterBoard:
-    __slots__ = ["contents","awaitingRelease"]
+class CenterBoard(CardCollection):
+    __slots__ = ["awaitingRelease"]
     
     def __init__(self, contents=None):
-        if contents is None:
-            self.contents = []
-        else:
-            self.contents = contents
-        self.awaitingRelease = []
+        CardCollection.__init__(self, contents)
     
     def accept(self, cardPlayed):
         #and return a value if hiki/match is achieved?
@@ -124,10 +91,10 @@ class CenterBoard:
         return awaitingRelease
     
     def __str__(self):
-        return str([card.name for card in self.contents])
+        return str([card.name.strip("'") for card in self.contents])
     
-    def __repr__(self):
-        return str(self.contents)
+    #def __repr__(self):
+     #   return str(self.contents)
     
     
 
