@@ -83,15 +83,28 @@ class CenterBoard(CardCollection):
             self.contents.remove(matchList[0])
             self.awaitingRelease = [matchList[0],cardPlayed]
             return 1
-        #stuff for displaying options here
+        if len(matchList) < 3:
+            choice = int(input("{} and {} both match: which do you want? 0 or 1: ".format(matchList[0],matchList[1])))
+            self.contents.remove(matchList[choice])
+            self.awaitingRelease = [matchList[choice],cardPlayed]
+            return 1
+        if len(matchList) == 3:
+            #print("Hiki!!")
+            for match in matchList:
+                self.contents.remove(match)
+            self.awaitingRelease = matchList + [cardPlayed]
 
-    def release(self, cards):
+    def release(self):
         #release to scoring area
         awaitingRelease,self.awaitingRelease = self.awaitingRelease, []
         return awaitingRelease
     
     def __str__(self):
-        return str([card.name.strip("'") for card in self.contents])
+        centerCards = ""
+        #TODO: JUST IMPLEMENT THIS WITH JOIN YOU DUMBASS
+        for name in [card.name for card in self.contents]:
+            centerCards += "{}, ".format(name)
+        return centerCards
     
     #def __repr__(self):
      #   return str(self.contents)
@@ -100,10 +113,19 @@ class CenterBoard(CardCollection):
 
 class ScoringArea:
     
-    __slots__ = ["contents"]
+    #__slots__ = ["contents"]
     
     def __init__(self):
         self.contents = {"20" : [], "10" : [], "5": [], "1": []}
+        self.yakuList = ["goko", "shiko", "ame-shiko", "sanko", "hanami", "tsukimi", "inoshikacho", "tane", "akatan", "aotan", "akaaotan", "tan", "kasu"]
+        
+        _falseList = [False for i in range(len(self.yakuList))]
+        self.yakuDict = dict(zip(self.yakuList, _falseList))
+        
+        _scoreList = [10, 8, 7, 5, 5, 5, 5, 1, 5, 5, 10, 1, 1]
+        self.scoreDict = dict(zip(self.yakuList,_scoreList))
+        
+        self.sake = 0
     
     def accept(self, cards):
         """Accepts any number of cards given at a time and puts them in the appropriate score areas"""
@@ -111,12 +133,238 @@ class ScoringArea:
         #scoring work itself should be done by the Manager
         for card in cards:
             self.contents[str(card.value)].append(card)
+            if card.nameId == "sep001":
+                self.sake = 1
+    
+    def checkYaku(self):
+        
+        #lists of names, for convenience. Sake cup count is used later for dregs purposes
+        brightList = [card.nameId for card in self.contents["20"]]
+        animalList = [card.nameId for card in self.contents["10"]]
+        ribbonList = [card.nameId for card in self.contents["5"]]
+        dregsList = [card.nameId for card in self.contents["1"]]
+        #sake = 0
+        
+        brightCount = len(brightList)
+        #check for Bright-5 (goko)
+        if brightCount == 5:
+            self.yakuDict["goko"] = True
+        #Bright-4s
+        elif brightCount == 4:
+            if "nov001" in brightList:
+                self.yakuDict["ame-shiko"] = True
+            else:
+                #otherwise, (full) 4-bright must be the case
+                self.yakuDict["shiko"] = True
+        elif brightCount == 3 and "nov001" not in brightList:
+            self.yakuDict["sanko"] = True
+        #check both Sake Cups...
+        if "sep001" in animalList:
+            self.sake = 1
+            self.yakuDict["hanami"] = "mar001" in brightList
+            self.yakuDict["tsukimi"] = "aug001" in brightList
+        
+        #check InoShikaCho...
+        self.yakuDict["inoshikacho"] = ("jul001" in animalList and "oct001" in animalList and "jun001" in animalList)
+        
+        #check 5 animals...
+        self.yakuDict["tane"] = (len(animalList) >= 5)
+        
+        #check akatan and aotan, remembering together they are one yaku
+        akatan = "jan002" in ribbonList and "feb002" in ribbonList and "mar002" in ribbonList
+        aotan = "jun002" in ribbonList and "sep002" in ribbonList and "oct002" in ribbonList
+        self.yakuDict["akatan"] = akatan
+        self.yakuDict["aotan"] = aotan
+        if akatan and aotan:
+            self.yakuDict["akatan"] = False
+            self.yakuDict["aotan"] = False
+            self.yakuDict["akaaotan"] = True
+        
+        #ribbon 5
+        self.yakuDict["tan"] = (len(ribbonList) >= 5)
+        
+        #10 dregs/plains
+        if len(dregsList) + self.sake >= 10:
+            self.yakuDict["kasu"] = True
+            
+        return self.yakuDict
+    
+    def rawRoundScore(self):
+        #yakuList = ["goko", "shiko", "ame-shiko", "sanko", "hanami", "tsukimi", "inoshikacho", "tane", "akatan", "aotan", "akaaotan", "tan", "kasu"]
+        roundScore = 0
+        achievedYaku = list(filter(lambda key: self.yakuDict[key], self.yakuDict.keys()))
+        for yaku in achievedYaku:
+            roundScore += self.scoreDict[yaku]
+            if yaku == "inoshikacho":
+                roundScore += (len(self.contents["10"]) - 3)
+            if yaku == "tane":
+                roundScore += (len(self.contents["10"]) - 5)
+            if yaku == "akatan":
+                roundScore += (len(self.contents["5"]) - 3)
+            if yaku == "aotan":
+                roundScore += (len(self.contents["5"]) - 3)
+            if yaku == "akaaotan":
+                roundScore += (len(self.contents["5"]) - 6)
+            if yaku == "tan":
+                roundScore += (len(self.contents["5"]) - 5)
+            if yaku == "kasu":
+                roundScore += (len(self.contents["1"]) + self.sake - 10)
+        
+        return roundScore
+            
+                
+        
+
+class Player:
+    
+    def __init__(self, playerNumber):
+        self.score = 0
+        self.playerNumber = playerNumber
+        self.hand = Hand()
+        self.scoringArea = ScoringArea()
+    
+    def addToHand(self, cards):
+        self.hand.contents += (cards)
+        return self.hand.contents
+    
 
 
 class Manager:
-    pass
+    
+    def __init__(self):
+        self.players = [Player(1),Player(2)]
+        self.state = "DEAL" 
+        self.currentplayer = 0
+        #self.fmap = {"AUTOWIN?": checkAutowin, "ROUNDWIN": roundWin}
+        
+    def checkAutowin(self):
+        """Searches for 4 cards of any month in either hand"""
+        #TODO: add in functionality for double 4-victory. 
+        for player in self.players:
+            monthVals = {}
+            for card in player.hand.contents:
+                month = card.monthId
+                if month in monthVals:
+                    monthVals[month] += 1
+                    #breaks the moment it finds 4 of a month
+                    if monthVals[month] == 4:
+                        break
+                else:
+                    monthVals[month] = 1
+            #iteration finished without finding 4
+            else:
+                return (False, player, None)
+        
+        return (True, player, month)
+    
+    #def roundWin(self, player, score):
+     #   player.score += score
+        #more?
+                
+        
+    def roundSetup(self):
+        self.koikoiBonus = 1
+        self.gameDeck = Deck(cards.getDeck())
+        print("Deck Initialized, shuffling...\n")
+        self.gameDeck.shuffle()
+        sleep(2)
+        print("Dealing...\n")
+        #TODO: CLEAR PLAYER HANDS FIRST
+        self.players[0].addToHand(self.gameDeck.pop(8))
+        self.players[0].hand.sort()
+        self.players[1].addToHand(self.gameDeck.pop(8))
+        self.players[1].hand.sort()
+        sleep(2)
+        print("Hands have been dealt.\n")
+        sleep(1)
+        print("Dealing to Center Board...\n")
+        self.center = CenterBoard(self.gameDeck.pop(8))
+        sleep(2)
+        print("Center Board:")
+        print(self.center)
+        print("\nGame is ready to begin. Proceed.")
+
+    def gameLoop(self):
+        while True:
+            #TODO: pretty much all of these should be wrapped in functions
+            #TODO: add more prints to actually make it player-friendly
+            if self.state == "DEAL":
+                self.roundSetup()
+                self.state = "AUTOWIN?"
+                continue
+            
+            elif self.state == "AUTOWIN?":
+                win, wonplayer, wonmonth = self.checkAutowin()
+                if win == True:
+                    self.state = "WONROUND"
+                    continue
+                self.state = "PLAYERPLAY"
+                continue
+            
+            elif self.state == "PLAYERPLAY":
+                if len(self.players[self.currentplayer].hand) == 0:
+                    self.state = "DEAL"
+                    continue
+                print("Player {}'s Turn".format(self.players[self.currentplayer].playerNumber))
+                print("Cards in Hand are: ")
+                print(self.players[self.currentplayer].hand)
+                #add error handling here...
+                needRelease = self.center.accept(self.players[self.currentplayer].hand.play(int(input("0-based Card Index to Play? "))))
+                if needRelease:
+                    if needRelease == 3:
+                        print("Hiki!")
+                    self.players[self.currentplayer].scoringArea.accept(self.center.release())
+                self.state = "DECKPLAY"
+                continue
+    
+            elif self.state == "DECKPLAY":
+                print("Now playing from Deck for Player {}".format(self.players[self.currentplayer].playerNumber))
+                #note: Deck.pop() returns a list, index there to give the card itself
+                needRelease = self.center.accept(self.gameDeck.pop(1)[0])
+                if needRelease:
+                    if needRelease == 3:
+                        print("Hiki!")
+                    self.players[self.currentplayer].scoringArea.accept(self.center.release())
+                self.state = "YAKU?"
+                continue
+            
+            elif self.state == "YAKU?":
+                yaku = self.players[self.currentplayer].scoringArea.checkYaku()
+                if True in yaku.values():
+                    #print("You got a yaku! koikoi coming soon")
+                    invalidInput = True
+                    while invalidInput == True:
+                        try:
+                            options = input("You got a yaku! koikoi or stop? ")
+                            if options.lower() != "koikoi" and options.lower() != "stop":
+                                raise IOError
+                        except IOError:
+                            print("INVALID INPUT. ENTER ONLY EITHER koikoi OR stop.")
+                        else:
+                            invalidInput = False
+                    if options == "koikoi":
+                        self.state = "PLAYERPLAY"
+                        self.currentplayer = not self.currentplayer
+                        self.koikoiBonus += 1
+                        continue
+                    else:
+                        self.state = "ROUNDWIN"
+                        continue
+                else:
+                    self.currentplayer = not self.currentplayer
+                    self.state = "PLAYERPLAY"
+                    continue
+                
+            elif self.state == "ROUNDWIN":
+                self.players[self.currentplayer].score += self.players[self.currentplayer].scoringArea.rawRoundScore()*self.koikoiBonus
+                self.state = "DEAL" 
+                
+                
+                
 
 
+                    
+        
 
 if __name__ == "__main__":
     """
@@ -150,7 +398,7 @@ if __name__ == "__main__":
     print("\n")
     hand2.sort()
     print(hand2)
-    """
+    
     gameDeck = Deck(cards.getDeck())
     print("Deck initialized...shuffling\n")
     sleep(2)
@@ -171,4 +419,7 @@ if __name__ == "__main__":
     print("Center Board:")
     print(center)
     print("\nGame is ready to begin. Proceed.")
+    """
+    game = Manager()
+    game.gameLoop()
     
