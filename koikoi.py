@@ -64,8 +64,17 @@ class Hand(CardCollection):
         CardCollection.__init__(self, contents)
     
     def play(self, cardIndex):
+        print("Now playing {}".format(self.contents[cardIndex].name))
+        print("\n")
+        sleep(2)
         cardToPlay = self.contents.pop(cardIndex)
         return cardToPlay
+
+    def clear(self):
+        self.contents = []
+    
+    def __str__(self):
+        return ", ".join([card.name for card in self.contents])
     
 class CenterBoard(CardCollection):
     __slots__ = ["awaitingRelease"]
@@ -100,11 +109,8 @@ class CenterBoard(CardCollection):
         return awaitingRelease
     
     def __str__(self):
-        centerCards = ""
-        #TODO: JUST IMPLEMENT THIS WITH JOIN YOU DUMBASS
-        for name in [card.name for card in self.contents]:
-            centerCards += "{}, ".format(name)
-        return centerCards
+        nameList = [card.name for card in self.contents]
+        return ", ".join(nameList[:4]) + "\n" + ", ".join(nameList[4:])
     
     #def __repr__(self):
      #   return str(self.contents)
@@ -133,8 +139,11 @@ class ScoringArea:
         #scoring work itself should be done by the Manager
         for card in cards:
             self.contents[str(card.value)].append(card)
+            print("{} added to your scoring area".format(card.name))
             if card.nameId == "sep001":
                 self.sake = 1
+        print("\n")
+        sleep(2)
     
     def checkYaku(self):
         
@@ -227,6 +236,15 @@ class Player:
         self.hand.contents += (cards)
         return self.hand.contents
     
+    def sortHand(self):
+        self.hand.sort()
+    
+    def clearHand(self):
+        self.hand.clear()
+        
+    def __getattr__(self, attr):
+        return getattr(self.hand, attr)
+    
 
 
 class Manager:
@@ -269,7 +287,8 @@ class Manager:
         self.gameDeck.shuffle()
         sleep(2)
         print("Dealing...\n")
-        #TODO: CLEAR PLAYER HANDS FIRST
+        self.players[0].clearHand()
+        self.players[1].clearHand()
         self.players[0].addToHand(self.gameDeck.pop(8))
         self.players[0].hand.sort()
         self.players[1].addToHand(self.gameDeck.pop(8))
@@ -280,13 +299,50 @@ class Manager:
         print("Dealing to Center Board...\n")
         self.center = CenterBoard(self.gameDeck.pop(8))
         sleep(2)
-        print("Center Board:")
-        print(self.center)
+        #print("Center Board:")
+        #print(self.center)
         print("\nGame is ready to begin. Proceed.")
+        sleep(2)
+        
+    def playerPlay(self):
+        print("Player {}'s Turn".format(self.players[self.currentplayer].playerNumber))
+        sleep(1)
+        print("\n")
+        print("Center Board is: ")
+        sleep(2)
+        print(self.center)
+        print("\n"*3)
+        print("Cards in Hand are: ")
+        sleep(1)
+        print(self.players[self.currentplayer].hand)
+        #TODO: add error handling here...
+        #TODO: split the next compound line into separate lines for readability
+        #TODO: give option to see scoring areas
+        needRelease = self.center.accept(self.players[self.currentplayer].hand.play(int(input("0-based Card Index to Play? "))))
+        if needRelease:
+            if needRelease == 3:
+                print("Hiki!")
+            self.players[self.currentplayer].scoringArea.accept(self.center.release())
+        
+    def deckPlay(self):
+        print("Now playing from Deck for Player {}".format(self.players[self.currentplayer].playerNumber))
+        sleep(2)
+        #note: Deck.pop() returns a list, index there to give the card itself
+        #TODO: add error handling here...
+        #TODO: split the next compound line into separate lines for readability
+        #TODO: give option to see scoring areas
+        cardToPlay = self.gameDeck.pop(1)[0]
+        print("Now playing {}...".format(cardToPlay.name))
+        print("\n")
+        needRelease = self.center.accept(cardToPlay)
+        if needRelease:
+            if needRelease == 3:
+                print("Hiki!")
+            self.players[self.currentplayer].scoringArea.accept(self.center.release())
+
 
     def gameLoop(self):
         while True:
-            #TODO: pretty much all of these should be wrapped in functions
             #TODO: add more prints to actually make it player-friendly
             if self.state == "DEAL":
                 self.roundSetup()
@@ -303,33 +359,22 @@ class Manager:
             
             elif self.state == "PLAYERPLAY":
                 if len(self.players[self.currentplayer].hand) == 0:
+                    print("Player {}'s Hand is Empty. Proceeding with next round...".format(self.players[self.currentplayer].playerNumber))
+                    sleep(2)
                     self.state = "DEAL"
                     continue
-                print("Player {}'s Turn".format(self.players[self.currentplayer].playerNumber))
-                print("Cards in Hand are: ")
-                print(self.players[self.currentplayer].hand)
-                #add error handling here...
-                needRelease = self.center.accept(self.players[self.currentplayer].hand.play(int(input("0-based Card Index to Play? "))))
-                if needRelease:
-                    if needRelease == 3:
-                        print("Hiki!")
-                    self.players[self.currentplayer].scoringArea.accept(self.center.release())
+                self.playerPlay()
                 self.state = "DECKPLAY"
                 continue
     
             elif self.state == "DECKPLAY":
-                print("Now playing from Deck for Player {}".format(self.players[self.currentplayer].playerNumber))
-                #note: Deck.pop() returns a list, index there to give the card itself
-                needRelease = self.center.accept(self.gameDeck.pop(1)[0])
-                if needRelease:
-                    if needRelease == 3:
-                        print("Hiki!")
-                    self.players[self.currentplayer].scoringArea.accept(self.center.release())
+                self.deckPlay()
                 self.state = "YAKU?"
                 continue
             
             elif self.state == "YAKU?":
                 yaku = self.players[self.currentplayer].scoringArea.checkYaku()
+                #achievedYaku = list(filter(lambda key: self.yakuDict[key], self.yakuDict.keys()))
                 if True in yaku.values():
                     #print("You got a yaku! koikoi coming soon")
                     invalidInput = True
@@ -367,59 +412,6 @@ class Manager:
         
 
 if __name__ == "__main__":
-    """
-    print(cards.getCard("jan001"))
-    myDeck = Deck([0,1,2,3,4,5])
-    print(myDeck)
-    myDeck.shuffle()
-    print(myDeck)
-    hand = Hand(myDeck.pop(3))
-    print(hand)
-    a = hand.play(1)
-    print(hand)
-    print(a)
-    
-    print("\nThe real tests start now...\n")
-    
-    realDeck = Deck(cards.getDeck())
-    print(realDeck)
-    print("\n")
-    realDeck.shuffle()
-    print(realDeck)
-    print("\n")
-    hand1 = Hand(realDeck.pop(8))
-    hand2 = Hand(realDeck.pop(8))
-    print(hand1)
-    print("\n")
-    hand1.sort()
-    print(hand1)
-    print("\n")
-    print(hand2)
-    print("\n")
-    hand2.sort()
-    print(hand2)
-    
-    gameDeck = Deck(cards.getDeck())
-    print("Deck initialized...shuffling\n")
-    sleep(2)
-    gameDeck.shuffle()
-    #print("Printing Deck...\n")
-    #print(gameDeck)
-    print("Dealing...\n")
-    hand1 = Hand(gameDeck.pop(8))
-    hand1.sort()
-    hand2 = Hand(gameDeck.pop(8))
-    hand2.sort()
-    sleep(2)
-    print("Hands have been dealt.\n")
-    sleep(1)
-    print("Dealing to Center Board...\n")
-    center = CenterBoard(gameDeck.pop(8))
-    sleep(2)
-    print("Center Board:")
-    print(center)
-    print("\nGame is ready to begin. Proceed.")
-    """
     game = Manager()
     game.gameLoop()
-    
+    pass
